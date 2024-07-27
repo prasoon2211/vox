@@ -4,11 +4,12 @@ import { FaPlay, FaPause, FaBackward, FaForward } from "react-icons/fa";
 import { MdSpeed } from "react-icons/md";
 
 const AudioPlayer = ({ src, title }) => {
-  const [playing, setPlaying] = useState(false);
+  const [playing, setPlaying] = useState(true);
   const [duration, setDuration] = useState(0);
   const [seek, setSeek] = useState(0);
   const [rate, setRate] = useState(1);
   const [showSpeedOptions, setShowSpeedOptions] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
   const playerRef = useRef(null);
   const rafRef = useRef(null);
   const [audioSrc, setAudioSrc] = useState(null);
@@ -19,6 +20,8 @@ const AudioPlayer = ({ src, title }) => {
     } else {
       setAudioSrc(src.includes(".") ? src : `${src}.mp3`);
     }
+    setPlaying(true);
+    setIsLoaded(false);
   }, [src]);
 
   useEffect(() => {
@@ -34,10 +37,13 @@ const AudioPlayer = ({ src, title }) => {
   const handleOnLoad = () => {
     const duration = playerRef.current.duration();
     setDuration(duration);
+    setIsLoaded(true);
   };
 
   const handleOnPlay = () => {
-    rafRef.current = requestAnimationFrame(updateSeek);
+    if (isLoaded) {
+      rafRef.current = requestAnimationFrame(updateSeek);
+    }
   };
 
   const handleOnEnd = () => {
@@ -46,13 +52,17 @@ const AudioPlayer = ({ src, title }) => {
   };
 
   const updateSeek = () => {
-    setSeek(playerRef.current.seek());
-    rafRef.current = requestAnimationFrame(updateSeek);
+    if (playerRef.current && isLoaded) {
+      setSeek(playerRef.current.seek());
+      rafRef.current = requestAnimationFrame(updateSeek);
+    }
   };
 
   const handleSeek = (direction) => {
-    const newSeek = playerRef.current.seek() + direction;
-    playerRef.current.seek(Math.max(0, Math.min(newSeek, duration)));
+    if (playerRef.current && isLoaded) {
+      const newSeek = playerRef.current.seek() + direction;
+      playerRef.current.seek(Math.max(0, Math.min(newSeek, duration)));
+    }
   };
 
   const handleSpeedChange = (newRate) => {
@@ -119,7 +129,11 @@ const AudioPlayer = ({ src, title }) => {
           min={0}
           max={duration}
           value={seek}
-          onChange={(e) => playerRef.current.seek(parseFloat(e.target.value))}
+          onChange={(e) => {
+            if (playerRef.current && isLoaded) {
+              playerRef.current.seek(parseFloat(e.target.value));
+            }
+          }}
           className="w-full"
         />
       </div>

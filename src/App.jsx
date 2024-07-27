@@ -6,7 +6,7 @@ import { openDB } from "idb";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+// import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -22,7 +22,6 @@ function App() {
   const [apiKey, setApiKey] = useState("");
   const [apiKeyInput, setApiKeyInput] = useState("");
   const [url, setUrl] = useState("");
-  const [audioUrl, setAudioUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [history, setHistory] = useState([]);
@@ -132,7 +131,6 @@ function App() {
     e.preventDefault();
     setIsLoading(true);
     setError("");
-    setAudioUrl("");
 
     try {
       if (!url) {
@@ -187,7 +185,10 @@ function App() {
       );
       const concatenatedBlob = new Blob(audioBlobs, { type: "audio/mpeg" });
       const audioUrl = URL.createObjectURL(concatenatedBlob);
-      setAudioUrl(audioUrl);
+      setCurrentAudio({
+        url: audioUrl,
+        title: article.title || url,
+      });
       addToHistory(article.title, concatenatedBlob, url);
     } catch (error) {
       console.error("Error:", error);
@@ -221,113 +222,92 @@ function App() {
     });
   };
 
-  const playConvertedAudio = () => {
-    if (audioUrl) {
-      setCurrentAudio({
-        url: audioUrl,
-        title: url, // Using the URL as a fallback title
-      });
-    }
-  };
-
   return (
-    <div className="container mx-auto p-4">
-      <Tabs defaultValue="convert">
+    <div className="container mx-auto p-6 max-w-2xl">
+      <Tabs defaultValue="convert" className="space-y-6">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="convert">Convert</TabsTrigger>
           <TabsTrigger value="history">History</TabsTrigger>
         </TabsList>
         <TabsContent value="convert">
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                {apiKey ? "Convert URL to Speech" : "Enter API Key"}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form
-                onSubmit={apiKey ? handleUrlSubmit : handleApiKeySubmit}
-                className="space-y-4"
+          <div className="space-y-4">
+            <h2 className="text-2xl font-semibold">
+              {apiKey ? "Convert URL to Speech" : "Enter API Key"}
+            </h2>
+            <form
+              onSubmit={apiKey ? handleUrlSubmit : handleApiKeySubmit}
+              className="space-y-4"
+            >
+              <Input
+                type={apiKey ? "url" : "text"}
+                value={apiKey ? url : apiKeyInput}
+                onChange={(e) =>
+                  apiKey
+                    ? setUrl(e.target.value)
+                    : setApiKeyInput(e.target.value)
+                }
+                placeholder={
+                  apiKey ? "Enter article URL" : "Enter OpenAI API Key"
+                }
+                required
+                className="w-full"
+              />
+              <Button
+                type="submit"
+                disabled={apiKey && isLoading}
+                className="w-full"
               >
-                <Input
-                  type={apiKey ? "url" : "text"}
-                  value={apiKey ? url : apiKeyInput}
-                  onChange={(e) =>
-                    apiKey
-                      ? setUrl(e.target.value)
-                      : setApiKeyInput(e.target.value)
-                  }
-                  placeholder={
-                    apiKey ? "Enter article URL" : "Enter OpenAI API Key"
-                  }
-                  required
-                />
-                <Button type="submit" disabled={apiKey && isLoading}>
-                  {apiKey
-                    ? isLoading
-                      ? "Converting..."
-                      : "Convert to Speech"
-                    : "Save API Key"}
-                </Button>
-              </form>
-              {error && <p className="text-red-500 mt-2">{error}</p>}
-              {audioUrl && (
-                <div className="mt-4">
-                  <Button onClick={playConvertedAudio}>
-                    Play Converted Audio
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                {apiKey
+                  ? isLoading
+                    ? "Converting..."
+                    : "Convert to Speech"
+                  : "Save API Key"}
+              </Button>
+            </form>
+            {error && <p className="text-red-500 mt-2">{error}</p>}
+          </div>
         </TabsContent>
         <TabsContent value="history">
-          <Card>
-            <CardHeader>
-              <CardTitle>History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {history.length === 0 ? (
-                <p>No history available.</p>
-              ) : (
-                history.map((item, index) => (
-                  <div key={index} className="mb-4 p-4 border rounded">
-                    <h3 className="text-lg font-semibold">{item.title}</h3>
-                    <div className="mt-2 space-x-2">
-                      <Button onClick={() => playHistoryItem(item)}>
-                        Play
-                      </Button>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="destructive">Delete</Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Are you sure?</DialogTitle>
-                            <DialogDescription>
-                              This action cannot be undone. This will
-                              permanently delete the audio.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="flex justify-end space-x-2">
-                            <Button variant="outline" onClick={() => {}}>
-                              Cancel
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              onClick={() => deleteHistoryItem(index)}
-                            >
-                              Delete
-                            </Button>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                    </div>
+          <div className="space-y-4">
+            <h2 className="text-2xl font-semibold">History</h2>
+            {history.length === 0 ? (
+              <p>No history available.</p>
+            ) : (
+              history.map((item, index) => (
+                <div key={index} className="bg-gray-100 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
+                  <div className="flex space-x-2">
+                    <Button onClick={() => playHistoryItem(item)}>Play</Button>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="destructive">Delete</Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Are you sure?</DialogTitle>
+                          <DialogDescription>
+                            This action cannot be undone. This will permanently
+                            delete the audio.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="flex justify-end space-x-2 mt-4">
+                          <Button variant="outline" onClick={() => {}}>
+                            Cancel
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            onClick={() => deleteHistoryItem(index)}
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
+                </div>
+              ))
+            )}
+          </div>
         </TabsContent>
       </Tabs>
       {currentAudio && (
