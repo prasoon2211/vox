@@ -6,6 +6,8 @@ import { openDB } from "idb";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Clipboard } from "lucide-react"; // Add this import
+
 import {
   Dialog,
   DialogContent,
@@ -213,6 +215,18 @@ function App() {
     }
   };
 
+  const handlePasteUrl = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      setUrl(text);
+    } catch (err) {
+      console.error("Failed to read clipboard contents: ", err);
+      setError(
+        "Unable to paste from clipboard. Please check your browser permissions."
+      );
+    }
+  };
+
   const playHistoryItem = (item) => {
     setUrl(item.pageUrl);
     setCurrentAudio({
@@ -230,28 +244,41 @@ function App() {
           <TabsTrigger value="history">History</TabsTrigger>
         </TabsList>
         <TabsContent value="convert">
-          <div className="space-y-4">
-            <h2 className="text-2xl font-semibold">
+          <div className="space-y-6">
+            <h2 className="text-2xl font-semibold text-center">
               {apiKey ? "Convert URL to Speech" : "Enter API Key"}
             </h2>
             <form
               onSubmit={apiKey ? handleUrlSubmit : handleApiKeySubmit}
               className="space-y-4"
             >
-              <Input
-                type={apiKey ? "url" : "text"}
-                value={apiKey ? url : apiKeyInput}
-                onChange={(e) =>
-                  apiKey
-                    ? setUrl(e.target.value)
-                    : setApiKeyInput(e.target.value)
-                }
-                placeholder={
-                  apiKey ? "Enter article URL" : "Enter OpenAI API Key"
-                }
-                required
-                className="w-full"
-              />
+              <div className="flex items-center space-x-2">
+                <Input
+                  type={apiKey ? "url" : "text"}
+                  value={apiKey ? url : apiKeyInput}
+                  onChange={(e) =>
+                    apiKey
+                      ? setUrl(e.target.value)
+                      : setApiKeyInput(e.target.value)
+                  }
+                  placeholder={
+                    apiKey ? "Enter article URL" : "Enter OpenAI API Key"
+                  }
+                  required
+                  className="flex-grow"
+                />
+                {apiKey && (
+                  <Button
+                    type="button"
+                    onClick={handlePasteUrl}
+                    className="flex-shrink-0"
+                    variant="outline"
+                    size="icon"
+                  >
+                    <Clipboard className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
               <Button
                 type="submit"
                 disabled={apiKey && isLoading}
@@ -264,7 +291,9 @@ function App() {
                   : "Save API Key"}
               </Button>
             </form>
-            {error && <p className="text-red-500 mt-2">{error}</p>}
+            {error && (
+              <p className="text-red-500 text-sm text-center mt-2">{error}</p>
+            )}
           </div>
         </TabsContent>
         <TabsContent value="history">
