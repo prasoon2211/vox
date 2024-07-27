@@ -59,12 +59,13 @@ function App() {
     }
   };
 
-  const addToHistory = async (title, audioBlob, pageUrl) => {
+  const addToHistory = async (title, audioBlob, pageUrl, duration) => {
     const newEntry = {
       title,
       audioBlob,
       pageUrl,
       date: new Date().toISOString(),
+      duration,
     };
     const updatedHistory = [newEntry, ...history];
     setHistory(updatedHistory);
@@ -179,11 +180,16 @@ function App() {
       );
       const concatenatedBlob = new Blob(audioBlobs, { type: "audio/mpeg" });
       const audioUrl = URL.createObjectURL(concatenatedBlob);
-      setCurrentAudio({
-        url: audioUrl,
-        title: article.title || url,
+      const audio = new Audio(audioUrl);
+      audio.addEventListener("loadedmetadata", () => {
+        const duration = audio.duration;
+        setCurrentAudio({
+          url: audioUrl,
+          title: article.title || url,
+          duration,
+        });
+        addToHistory(article.title, concatenatedBlob, url, duration);
       });
-      addToHistory(article.title, concatenatedBlob, url);
     } catch (error) {
       console.error("Error:", error);
       if (error.response) {
@@ -315,58 +321,62 @@ function App() {
           </div>
         </TabsContent>{" "}
         <TabsContent value="history">
-          <div className="space-y-4">
-            <h2 className="text-2xl font-semibold">History</h2>
+          <div className="space-y-6">
             {history.length === 0 ? (
-              <p>No history available.</p>
+              <p className="text-center text-gray-500">No history available.</p>
             ) : (
               history.map((item, index) => (
                 <div
                   key={index}
-                  className="bg-gray-100 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300"
+                  className="bg-gray-50 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden"
                 >
-                  <div className="flex flex-col">
-                    <h3 className="text-lg font-semibold mb-2">
+                  <div className="p-4">
+                    <h3 className="text-lg font-semibold mb-2 truncate">
                       <a
                         href={item.pageUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 text-blue-600 hover:text-blue-800 hover:underline"
-                        style={{ textDecoration: "none" }}
+                        className="text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-2"
                       >
                         {item.title}
-                        <ExternalLink className="w-5 h-5" />
+                        <ExternalLink className="w-4 h-4" />
                       </a>
                     </h3>
-                    <div className="flex justify-between items-center mt-2">
-                      <Button
+                    <p className="text-sm text-gray-600 mb-2">
+                      Duration: {Math.floor(item.duration / 60)}:
+                      {Math.floor(item.duration % 60)
+                        .toString()
+                        .padStart(2, "0")}
+                    </p>
+                    <div className="flex justify-between items-center mt-4">
+                      <button
                         onClick={() => playHistoryItem(item)}
-                        variant="icon"
+                        className="text-gray-600 hover:text-blue-600 transition-colors duration-200"
                         aria-label="Play Audio"
                       >
-                        <Play className="w-6 h-6 text-gray-600 hover:text-black" />
-                      </Button>
-                      <Button
+                        <Play className="w-6 h-6" />
+                      </button>
+                      <button
                         onClick={() => deleteHistoryItem(index)}
-                        variant="icon destructive"
+                        className="text-gray-600 hover:text-red-600 transition-colors duration-200"
                         aria-label="Delete History"
                       >
-                        <Trash2 className="w-6 h-6 text-gray-600 hover:text-black" />
-                      </Button>
-                      <Button
+                        <Trash2 className="w-6 h-6" />
+                      </button>
+                      <button
                         onClick={() => downloadHistoryItem(item)}
-                        variant="icon"
+                        className="text-gray-600 hover:text-green-600 transition-colors duration-200"
                         aria-label="Download Audio"
                       >
-                        <Download className="w-6 h-6 text-gray-600 hover:text-black" />
-                      </Button>
+                        <Download className="w-6 h-6" />
+                      </button>
                     </div>
                   </div>
                 </div>
               ))
             )}
           </div>
-        </TabsContent>
+        </TabsContent>{" "}
       </Tabs>
       {currentAudio && (
         <AudioPlayer
