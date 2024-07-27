@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { Readability } from "@mozilla/readability";
 import OpenAI from "openai";
 import "./App.css";
 import { openDB } from "idb";
 
-const History = ({ history, onDelete }) => {
+const History = ({ history, onDelete, onPlay }) => {
   return (
     <div className="history">
       {history.length === 0 ? (
@@ -14,12 +14,7 @@ const History = ({ history, onDelete }) => {
         history.map((item, index) => (
           <div key={index} className="history-item">
             <h3>{item.title}</h3>
-            <a href={item.audioUrl} target="_blank" rel="noopener noreferrer">
-              Listen (opens a new tab)
-            </a>
-            <a href={item.pageUrl} target="_blank" rel="noopener noreferrer">
-              Original URL
-            </a>
+            <button onClick={() => onPlay(item)}>Play</button>
             <button onClick={() => onDelete(index)}>Delete</button>
           </div>
         ))
@@ -37,6 +32,7 @@ function App() {
   const [error, setError] = useState("");
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState([]);
+  const audioRef = useRef(null);
 
   useEffect(() => {
     try {
@@ -56,22 +52,29 @@ function App() {
   const loadHistory = async () => {
     try {
       const db = await openDB("AudioDB", 1, {
+        // Increase the version number to trigger upgrade
         upgrade(db) {
-          db.createObjectStore("audio");
-          db.createObjectStore("history");
+          if (!db.objectStoreNames.contains("history")) {
+            db.createObjectStore("history"); // Ensure the 'history' store is created
+          }
         },
       });
       const storedHistory = (await db.get("history", "audioHistory")) || [];
-      setHistory(storedHistory);
+      const updatedHistory = storedHistory.map((item) => ({
+        ...item,
+        audioUrl: URL.createObjectURL(item.audioBlob), // Regenerate blob URL
+      }));
+      setHistory(updatedHistory);
     } catch (error) {
       console.error("Error loading history:", error);
+      setError("Failed to load history. Please try refreshing the page.");
     }
   };
 
-  const addToHistory = async (title, audioUrl, pageUrl) => {
+  const addToHistory = async (title, audioBlob, pageUrl) => {
     const newEntry = {
       title,
-      audioUrl,
+      audioBlob,
       pageUrl,
       date: new Date().toISOString(),
     };
@@ -82,6 +85,7 @@ function App() {
       await db.put("history", updatedHistory, "audioHistory");
     } catch (error) {
       console.error("Error saving history:", error);
+      setError("Failed to save to history. Please try again.");
     }
   };
 
@@ -93,36 +97,9 @@ function App() {
       await db.put("history", updatedHistory, "audioHistory");
     } catch (error) {
       console.error("Error updating history:", error);
+      setError("Failed to delete history item. Please try again.");
     }
   };
-
-  const storeAudio = async (audioBlob) => {
-    try {
-      const db = await openDB("AudioDB", 1, {
-        upgrade(db) {
-          db.createObjectStore("audio");
-        },
-      });
-      await db.put("audio", audioBlob, "latestAudio");
-    } catch (error) {
-      console.error("Error storing audio:", error);
-    }
-  };
-
-  const loadStoredAudio = async () => {
-    try {
-      const db = await openDB("AudioDB", 1);
-      const audioBlob = await db.get("audio", "latestAudio");
-      if (audioBlob) {
-        const audioUrl = URL.createObjectURL(audioBlob);
-        setAudioUrl(audioUrl);
-      }
-    } catch (error) {
-      console.error("Error loading stored audio:", error);
-    }
-  };
-
-  loadStoredAudio();
 
   const handleApiKeySubmit = (e) => {
     e.preventDefault();
@@ -214,10 +191,9 @@ function App() {
         audioResponses.map((response) => response.arrayBuffer())
       );
       const concatenatedBlob = new Blob(audioBlobs, { type: "audio/mpeg" });
-      await storeAudio(concatenatedBlob);
       const audioUrl = URL.createObjectURL(concatenatedBlob);
       setAudioUrl(audioUrl);
-      addToHistory(article.title, audioUrl, url);
+      addToHistory(article.title, concatenatedBlob, url);
     } catch (error) {
       console.error("Error:", error);
       if (error.response) {
@@ -242,6 +218,15 @@ function App() {
     }
   };
 
+  const playHistoryItem = (item) => {
+    setUrl(item.pageUrl); // Update the URL
+    setAudioUrl(item.audioUrl); // Update the audio URL
+    setShowHistory(false); // Switch view to homepage
+    if (audioRef.current) {
+      audioRef.current.play();
+    }
+  };
+
   return (
     <div className="App">
       <div className="tabs">
@@ -259,7 +244,11 @@ function App() {
         </button>
       </div>
       {showHistory ? (
-        <History history={history} onDelete={deleteHistoryItem} />
+        <History
+          history={history}
+          onDelete={deleteHistoryItem}
+          onPlay={playHistoryItem}
+        />
       ) : (
         <>
           <form onSubmit={apiKey ? handleUrlSubmit : handleApiKeySubmit}>
@@ -284,7 +273,7 @@ function App() {
           </form>
           {error && <p className="error">{error}</p>}
           {audioUrl && (
-            <audio controls src={audioUrl}>
+            <audio ref={audioRef} controls src={audioUrl}>
               Your browser does not support the audio element.
             </audio>
           )}
