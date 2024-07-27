@@ -23,6 +23,8 @@ import {
 
 import AudioPlayer from "./AudioPlayer";
 
+const CORS_PROXY = "https://corsproxy.io";
+
 function App() {
   const [apiKey, setApiKey] = useState("");
   const [apiKeyInput, setApiKeyInput] = useState("");
@@ -165,14 +167,35 @@ function App() {
       }
 
       // Fetch article
-      const response = await axios.get(
-        `https://corsproxy.io/?${encodeURIComponent(url)}`
-      );
+      let response;
+      try {
+        response = await axios.get(
+          `${CORS_PROXY}/${encodeURIComponent(url)}`,
+          { timeout: 10000 } // Set a timeout of 10 seconds
+        );
+      } catch (fetchError) {
+        if (fetchError.code === "ECONNABORTED") {
+          throw new Error(
+            "Request timed out. The proxy server might be overloaded. Please try again later."
+          );
+        } else if (fetchError.response) {
+          throw new Error(
+            `Proxy server error: ${fetchError.response.status} - ${fetchError.response.statusText}`
+          );
+        } else {
+          throw new Error(
+            "Failed to fetch the article. Please check your internet connection and try again."
+          );
+        }
+      }
+
       const doc = new DOMParser().parseFromString(response.data, "text/html");
       const article = new Readability(doc).parse();
 
-      if (!article) {
-        throw new Error("Unable to parse the article. Please check the URL.");
+      if (!article || !article.textContent.trim()) {
+        throw new Error(
+          "Unable to parse the article or no content found. The website might be blocking content extraction."
+        );
       }
 
       // Construct the full string for OpenAI API
@@ -187,7 +210,7 @@ function App() {
       const chunks = chunkText(fullText);
 
       if (chunks.length === 0) {
-        throw new Error("No content found in the article.");
+        throw new Error("No content found in the article after processing.");
       }
 
       // Convert to speech in parallel
@@ -204,7 +227,12 @@ function App() {
         })
       );
 
-      const audioResponses = await Promise.all(audioPromises);
+      let audioResponses;
+      try {
+        audioResponses = await Promise.all(audioPromises);
+      } catch (openaiError) {
+        throw new Error(`OpenAI API error: ${openaiError.message}`);
+      }
 
       // Concatenate audio
       const audioBlobs = await Promise.all(
@@ -224,23 +252,9 @@ function App() {
       });
     } catch (error) {
       console.error("Error:", error);
-      if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        setError(
-          `Server error: ${error.response.status} - ${error.response.data}`
-        );
-      } else if (error.request) {
-        // The request was made but no response was received
-        setError(
-          "No response received from the server. Please check your internet connection."
-        );
-      } else {
-        // Something happened in setting up the request that triggered an Error
-        setError(
-          error.message || "An unexpected error occurred. Please try again."
-        );
-      }
+      setError(
+        error.message || "An unexpected error occurred. Please try again."
+      );
     } finally {
       setIsLoading(false);
     }
