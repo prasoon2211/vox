@@ -6,7 +6,6 @@ import { openDB } from "idb";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-// import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -25,8 +24,8 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [history, setHistory] = useState([]);
-  // const audioRef = useRef(null);
   const [currentAudio, setCurrentAudio] = useState(null);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     try {
@@ -220,6 +219,7 @@ function App() {
       url: item.audioUrl,
       title: item.title,
     });
+    setIsPlaying(true); // Start playing when history item is clicked
   };
 
   return (
@@ -315,6 +315,8 @@ function App() {
           key={currentAudio.url}
           src={currentAudio.url}
           title={currentAudio.title}
+          playing={isPlaying}
+          onTogglePlay={() => setIsPlaying(!isPlaying)}
         />
       )}
     </div>
