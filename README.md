@@ -12,6 +12,10 @@ This React application converts web articles to speech using OpenAI's Text-to-Sp
 
 ## Getting Started
 
+Use a hosted version here: https://usevox.netlify.app
+
+Or, to use locally:
+
 1. Clone the repository
 2. Install dependencies: `npm install`
 3. Start the development server: `npm run dev`
