@@ -292,7 +292,6 @@ function App() {
   };
 
   const playHistoryItem = (item) => {
-    setUrl(item.pageUrl);
     setCurrentAudio({
       url: item.audioUrl,
       title: item.title,
