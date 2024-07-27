@@ -47,7 +47,10 @@ function App() {
       setFilteredHistory(history);
     } else {
       const fuse = new Fuse(history, {
-        keys: ["title"],
+        keys: [
+          "title",
+          { name: "pageUrl", getFn: (item) => new URL(item.pageUrl).hostname },
+        ],
         threshold: 0.4,
       });
       const result = fuse.search(searchTerm);
@@ -360,19 +363,20 @@ function App() {
                   className="bg-gray-50 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden"
                 >
                   <div className="p-4">
-                    <h3 className="text-lg font-semibold mb-2 truncate">
+                    <h3 className="text-lg font-semibold mb-2 line-clamp-2">
                       <a
                         href={item.pageUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-2"
+                        className="text-blue-600 hover:text-blue-800 hover:underline flex items-start gap-2"
                       >
-                        {item.title}
-                        <ExternalLink className="w-4 h-4" />
+                        <span className="flex-grow">{item.title}</span>
+                        <ExternalLink className="w-4 h-4 flex-shrink-0 mt-1" />
                       </a>
-                    </h3>
+                    </h3>{" "}
                     <p className="text-sm text-gray-600 mb-2">
-                      Duration:{" "}
+                      {new URL(item.pageUrl).hostname}
+                      {" • "}
                       {Math.floor(item.duration / 3600) > 0
                         ? `${Math.floor(item.duration / 3600)} h ${Math.floor(
                             (item.duration % 3600) / 60
@@ -390,18 +394,18 @@ function App() {
                         <Play className="w-6 h-6" />
                       </button>
                       <button
-                        onClick={() => deleteHistoryItem(index)}
-                        className="text-gray-600 hover:text-red-600 transition-colors duration-200"
-                        aria-label="Delete History"
-                      >
-                        <Trash2 className="w-6 h-6" />
-                      </button>
-                      <button
                         onClick={() => downloadHistoryItem(item)}
                         className="text-gray-600 hover:text-green-600 transition-colors duration-200"
                         aria-label="Download Audio"
                       >
                         <Download className="w-6 h-6" />
+                      </button>
+                      <button
+                        onClick={() => deleteHistoryItem(index)}
+                        className="text-gray-600 hover:text-red-600 transition-colors duration-200"
+                        aria-label="Delete History"
+                      >
+                        <Trash2 className="w-6 h-6" />
                       </button>
                     </div>
                   </div>
