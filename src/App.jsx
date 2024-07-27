@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Clipboard } from "lucide-react";
 import { ExternalLink } from "lucide-react";
+import { Search } from "lucide-react";
 import { Play, Trash2, Download } from "lucide-react";
+import Fuse from "fuse.js"; // Add this import for fuzzy search
 
 import AudioPlayer from "./AudioPlayer";
 
@@ -21,6 +23,8 @@ function App() {
   const [history, setHistory] = useState([]);
   const [currentAudio, setCurrentAudio] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [searchTerm, setSearchTerm] = useState(""); // Add this state
+  const [filteredHistory, setFilteredHistory] = useState([]); // Add this state
 
   useEffect(() => {
     try {
@@ -36,6 +40,20 @@ function App() {
     }
     loadHistory();
   }, []);
+
+  useEffect(() => {
+    // Perform fuzzy search whenever history or searchTerm changes
+    if (searchTerm.trim() === "") {
+      setFilteredHistory(history);
+    } else {
+      const fuse = new Fuse(history, {
+        keys: ["title"],
+        threshold: 0.4,
+      });
+      const result = fuse.search(searchTerm);
+      setFilteredHistory(result.map((item) => item.item));
+    }
+  }, [history, searchTerm]);
 
   const loadHistory = async () => {
     try {
@@ -322,10 +340,21 @@ function App() {
         </TabsContent>{" "}
         <TabsContent value="history">
           <div className="space-y-6">
-            {history.length === 0 ? (
+            <div className="relative">
+              <Input
+                type="text"
+                placeholder="Search history..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+              <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            </div>
+
+            {filteredHistory.length === 0 ? (
               <p className="text-center text-gray-500">No history available.</p>
             ) : (
-              history.map((item, index) => (
+              filteredHistory.map((item, index) => (
                 <div
                   key={index}
                   className="bg-gray-50 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden"
@@ -343,10 +372,14 @@ function App() {
                       </a>
                     </h3>
                     <p className="text-sm text-gray-600 mb-2">
-                      Duration: {Math.floor(item.duration / 60)}:
-                      {Math.floor(item.duration % 60)
-                        .toString()
-                        .padStart(2, "0")}
+                      Duration:{" "}
+                      {Math.floor(item.duration / 3600) > 0
+                        ? `${Math.floor(item.duration / 3600)} h ${Math.floor(
+                            (item.duration % 3600) / 60
+                          )} min`
+                        : `${Math.floor(item.duration / 60)} min ${Math.floor(
+                            item.duration % 60
+                          )} sec`}
                     </p>
                     <div className="flex justify-between items-center mt-4">
                       <button
