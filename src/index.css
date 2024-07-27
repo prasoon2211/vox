@@ -57,3 +57,21 @@
     @apply bg-background text-foreground;
   }
 }
+
+.history-item {
+  padding: 16px;
+  margin-bottom: 8px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.history-item h3 {
+  margin-bottom: 12px; /* More space between title and buttons */
+}
+
+.history-item .button-container {
+  display: flex;
+  justify-content: space-between; /* This spreads out the buttons */
+  padding: 8px 0; /* Adds vertical padding */
+}

@@ -6,16 +6,9 @@ import { openDB } from "idb";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Clipboard } from "lucide-react"; // Add this import
-
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Clipboard } from "lucide-react";
+import { ExternalLink } from "lucide-react";
+import { Play, Trash2, Download } from "lucide-react";
 
 import AudioPlayer from "./AudioPlayer";
 
@@ -215,10 +208,35 @@ function App() {
     }
   };
 
+  const downloadHistoryItem = (item) => {
+    const url = window.URL.createObjectURL(item.audioBlob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${item.title || "download"}.mp3`; // Assuming the audio is in mp3 format
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  };
+
+  const isValidUrl = (string) => {
+    try {
+      new URL(string);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  };
+
   const handlePasteUrl = async () => {
     try {
       const text = await navigator.clipboard.readText();
-      setUrl(text);
+      if (isValidUrl(text)) {
+        setUrl(text);
+        setError(""); // Clear any existing error
+      } else {
+        setError("Invalid URL. Please paste a valid URL.");
+      }
     } catch (err) {
       console.error("Failed to read clipboard contents: ", err);
       setError(
@@ -295,7 +313,7 @@ function App() {
               <p className="text-red-500 text-sm text-center mt-2">{error}</p>
             )}
           </div>
-        </TabsContent>
+        </TabsContent>{" "}
         <TabsContent value="history">
           <div className="space-y-4">
             <h2 className="text-2xl font-semibold">History</h2>
@@ -303,35 +321,46 @@ function App() {
               <p>No history available.</p>
             ) : (
               history.map((item, index) => (
-                <div key={index} className="bg-gray-100 p-4 rounded-lg">
-                  <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
-                  <div className="flex space-x-2">
-                    <Button onClick={() => playHistoryItem(item)}>Play</Button>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="destructive">Delete</Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Are you sure?</DialogTitle>
-                          <DialogDescription>
-                            This action cannot be undone. This will permanently
-                            delete the audio.
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="flex justify-end space-x-2 mt-4">
-                          <Button variant="outline" onClick={() => {}}>
-                            Cancel
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            onClick={() => deleteHistoryItem(index)}
-                          >
-                            Delete
-                          </Button>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
+                <div
+                  key={index}
+                  className="bg-gray-100 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300"
+                >
+                  <div className="flex flex-col">
+                    <h3 className="text-lg font-semibold mb-2">
+                      <a
+                        href={item.pageUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-blue-600 hover:text-blue-800 hover:underline"
+                        style={{ textDecoration: "none" }}
+                      >
+                        {item.title}
+                        <ExternalLink className="w-5 h-5" />
+                      </a>
+                    </h3>
+                    <div className="flex justify-between items-center mt-2">
+                      <Button
+                        onClick={() => playHistoryItem(item)}
+                        variant="icon"
+                        aria-label="Play Audio"
+                      >
+                        <Play className="w-6 h-6 text-gray-600 hover:text-black" />
+                      </Button>
+                      <Button
+                        onClick={() => deleteHistoryItem(index)}
+                        variant="icon destructive"
+                        aria-label="Delete History"
+                      >
+                        <Trash2 className="w-6 h-6 text-gray-600 hover:text-black" />
+                      </Button>
+                      <Button
+                        onClick={() => downloadHistoryItem(item)}
+                        variant="icon"
+                        aria-label="Download Audio"
+                      >
+                        <Download className="w-6 h-6 text-gray-600 hover:text-black" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))
