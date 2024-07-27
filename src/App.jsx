@@ -2,26 +2,19 @@ import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { Readability } from "@mozilla/readability";
 import OpenAI from "openai";
-import "./App.css";
 import { openDB } from "idb";
-
-const History = ({ history, onDelete, onPlay }) => {
-  return (
-    <div className="history">
-      {history.length === 0 ? (
-        <p>No history available.</p>
-      ) : (
-        history.map((item, index) => (
-          <div key={index} className="history-item">
-            <h3>{item.title}</h3>
-            <button onClick={() => onPlay(item)}>Play</button>
-            <button onClick={() => onDelete(index)}>Delete</button>
-          </div>
-        ))
-      )}
-    </div>
-  );
-};
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 function App() {
   const [apiKey, setApiKey] = useState("");
@@ -30,7 +23,6 @@ function App() {
   const [audioUrl, setAudioUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState([]);
   const audioRef = useRef(null);
 
@@ -221,64 +213,114 @@ function App() {
   const playHistoryItem = (item) => {
     setUrl(item.pageUrl); // Update the URL
     setAudioUrl(item.audioUrl); // Update the audio URL
-    setShowHistory(false); // Switch view to homepage
     if (audioRef.current) {
       audioRef.current.play();
     }
   };
 
   return (
-    <div className="App">
-      <div className="tabs">
-        <button
-          onClick={() => setShowHistory(false)}
-          className={!showHistory ? "active" : ""}
-        >
-          Convert
-        </button>
-        <button
-          onClick={() => setShowHistory(true)}
-          className={showHistory ? "active" : ""}
-        >
-          History
-        </button>
-      </div>
-      {showHistory ? (
-        <History
-          history={history}
-          onDelete={deleteHistoryItem}
-          onPlay={playHistoryItem}
-        />
-      ) : (
-        <>
-          <form onSubmit={apiKey ? handleUrlSubmit : handleApiKeySubmit}>
-            <input
-              type={apiKey ? "url" : "text"}
-              value={apiKey ? url : apiKeyInput}
-              onChange={(e) =>
-                apiKey ? setUrl(e.target.value) : setApiKeyInput(e.target.value)
-              }
-              placeholder={
-                apiKey ? "Enter article URL" : "Enter OpenAI API Key"
-              }
-              required
-            />
-            <button type="submit" disabled={apiKey && isLoading}>
-              {apiKey
-                ? isLoading
-                  ? "Converting..."
-                  : "Convert to Speech"
-                : "Save API Key"}
-            </button>
-          </form>
-          {error && <p className="error">{error}</p>}
-          {audioUrl && (
-            <audio ref={audioRef} controls src={audioUrl}>
-              Your browser does not support the audio element.
-            </audio>
-          )}
-        </>
-      )}
+    <div className="container mx-auto p-4">
+      <Tabs defaultValue="convert">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="convert">Convert</TabsTrigger>
+          <TabsTrigger value="history">History</TabsTrigger>
+        </TabsList>
+        <TabsContent value="convert">
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                {apiKey ? "Convert URL to Speech" : "Enter API Key"}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form
+                onSubmit={apiKey ? handleUrlSubmit : handleApiKeySubmit}
+                className="space-y-4"
+              >
+                <Input
+                  type={apiKey ? "url" : "text"}
+                  value={apiKey ? url : apiKeyInput}
+                  onChange={(e) =>
+                    apiKey
+                      ? setUrl(e.target.value)
+                      : setApiKeyInput(e.target.value)
+                  }
+                  placeholder={
+                    apiKey ? "Enter article URL" : "Enter OpenAI API Key"
+                  }
+                  required
+                />
+                <Button type="submit" disabled={apiKey && isLoading}>
+                  {apiKey
+                    ? isLoading
+                      ? "Converting..."
+                      : "Convert to Speech"
+                    : "Save API Key"}
+                </Button>
+              </form>
+              {error && <p className="text-red-500 mt-2">{error}</p>}
+              {audioUrl && (
+                <audio
+                  ref={audioRef}
+                  controls
+                  src={audioUrl}
+                  className="w-full mt-4"
+                >
+                  Your browser does not support the audio element.
+                </audio>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="history">
+          <Card>
+            <CardHeader>
+              <CardTitle>History</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {history.length === 0 ? (
+                <p>No history available.</p>
+              ) : (
+                history.map((item, index) => (
+                  <div key={index} className="mb-4 p-4 border rounded">
+                    <h3 className="text-lg font-semibold">{item.title}</h3>
+                    <div className="mt-2 space-x-2">
+                      <Button onClick={() => playHistoryItem(item)}>
+                        Play
+                      </Button>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="destructive">Delete</Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Are you sure?</DialogTitle>
+                            <DialogDescription>
+                              This action cannot be undone. This will
+                              permanently delete the audio.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="flex justify-end space-x-2">
+                            <Button variant="outline" onClick={() => {}}>
+                              Cancel
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              onClick={() => deleteHistoryItem(index)}
+                            >
+                              Delete
+                            </Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
