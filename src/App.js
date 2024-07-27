@@ -25,6 +25,27 @@ function App() {
     setApiKey(apiKeyInput);
   };
 
+  const chunkText = (text, maxLength = 4000) => {
+    const chunks = [];
+    const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
+    let currentChunk = "";
+
+    for (const sentence of sentences) {
+      if (currentChunk.length + sentence.length <= maxLength) {
+        currentChunk += sentence;
+      } else {
+        chunks.push(currentChunk.trim());
+        currentChunk = sentence;
+      }
+    }
+
+    if (currentChunk) {
+      chunks.push(currentChunk.trim());
+    }
+
+    return chunks;
+  };
+
   const handleUrlSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -39,19 +60,39 @@ function App() {
       const doc = new DOMParser().parseFromString(response.data, "text/html");
       const article = new Readability(doc).parse();
 
-      // Convert to speech
+      // Construct the full string for OpenAI API
+      let fullText = "";
+      if (article.title) fullText += `Title: ${article.title}\n\n`;
+      if (article.byline) fullText += `Subtitle: ${article.byline}\n\n`;
+      if (article.datePublished)
+        fullText += `Date: ${article.datePublished}\n\n`;
+      fullText += `${article.textContent}`;
+
+      // Chunk the text
+      const chunks = chunkText(fullText);
+
+      // Convert to speech in parallel
       const openai = new OpenAI({
         apiKey: apiKey,
         dangerouslyAllowBrowser: true,
       });
-      const mp3 = await openai.audio.speech.create({
-        model: "tts-1",
-        voice: "alloy",
-        input: article.textContent,
-      });
 
-      const blob = new Blob([await mp3.arrayBuffer()], { type: "audio/mpeg" });
-      const audioUrl = URL.createObjectURL(blob);
+      const audioPromises = chunks.map((chunk) =>
+        openai.audio.speech.create({
+          model: "tts-1",
+          voice: "alloy",
+          input: chunk,
+        })
+      );
+
+      const audioResponses = await Promise.all(audioPromises);
+
+      // Concatenate audio
+      const audioBlobs = await Promise.all(
+        audioResponses.map((response) => response.arrayBuffer())
+      );
+      const concatenatedBlob = new Blob(audioBlobs, { type: "audio/mpeg" });
+      const audioUrl = URL.createObjectURL(concatenatedBlob);
       setAudioUrl(audioUrl);
     } catch (error) {
       console.error("Error:", error);
