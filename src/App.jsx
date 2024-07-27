@@ -282,13 +282,13 @@ function App() {
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-2xl">
-      <Tabs defaultValue="convert" className="space-y-6">
+    <div className="container mx-auto p-6 max-w-2xl flex flex-col min-h-screen">
+      <Tabs defaultValue="convert" className="flex-grow flex flex-col">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="convert">Convert</TabsTrigger>
           <TabsTrigger value="history">History</TabsTrigger>
         </TabsList>
-        <TabsContent value="convert">
+        <TabsContent value="convert" className="flex-grow">
           <div className="space-y-6">
             <h2 className="text-2xl font-semibold text-center">
               {apiKey ? "Convert URL to Speech" : "Enter API Key"}
@@ -341,8 +341,13 @@ function App() {
             )}
           </div>
         </TabsContent>{" "}
-        <TabsContent value="history">
-          <div className="space-y-6">
+        <TabsContent
+          value="history"
+          className={`flex-grow overflow-y-auto ${currentAudio ? "pb-32" : ""}`}
+        >
+          <div className="space-y-6 pb-4">
+            {" "}
+            {/* Added pb-4 for extra padding at the bottom */}
             <div className="relative">
               <Input
                 type="text"
@@ -353,7 +358,6 @@ function App() {
               />
               <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             </div>
-
             {filteredHistory.length === 0 ? (
               <p className="text-center text-gray-500">No history available.</p>
             ) : (
@@ -416,13 +420,15 @@ function App() {
         </TabsContent>{" "}
       </Tabs>
       {currentAudio && (
-        <AudioPlayer
-          key={currentAudio.url}
-          src={currentAudio.url}
-          title={currentAudio.title}
-          playing={isPlaying}
-          onTogglePlay={() => setIsPlaying(!isPlaying)}
-        />
+        <div className="fixed bottom-0 left-0 right-0 z-50">
+          <AudioPlayer
+            key={currentAudio.url}
+            src={currentAudio.url}
+            title={currentAudio.title}
+            playing={isPlaying}
+            onTogglePlay={() => setIsPlaying(!isPlaying)}
+          />
+        </div>
       )}
     </div>
   );
