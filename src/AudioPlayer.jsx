@@ -76,6 +76,7 @@ const AudioPlayer = ({ src, title }) => {
           onEnd={handleOnEnd}
           rate={rate}
           format={["mp3"]}
+          html5={true}
         />
       )}
       <div className="flex items-center justify-center space-x-4">
