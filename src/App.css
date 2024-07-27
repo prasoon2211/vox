@@ -1,40 +1,220 @@
+:root {
+  --bg-color: #f5f5f5;
+  --text-color: #333;
+  --primary-color: #3498db;
+  --secondary-color: #2ecc71;
+  --error-color: #e74c3c;
+  --card-bg: #fff;
+  --input-bg: #fff;
+  --button-text: #fff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-color: #1a1a1a;
+    --text-color: #f5f5f5;
+    --primary-color: #3498db;
+    --secondary-color: #2ecc71;
+    --error-color: #e74c3c;
+    --card-bg: #2c2c2c;
+    --input-bg: #333;
+    --button-text: #fff;
+  }
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  transition: background-color 0.3s, color 0.3s;
+}
+
 .App {
-  max-width: 600px;
+  max-width: 800px;
   margin: 0 auto;
   padding: 20px;
-  font-family: Arial, sans-serif;
+}
+
+.tabs {
+  display: flex;
+  margin-bottom: 20px;
+  background-color: var(--card-bg);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.tabs button {
+  flex: 1;
+  padding: 12px;
+  font-size: 16px;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-color);
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.tabs button.active {
+  background-color: var(--primary-color);
+  color: var(--button-text);
 }
 
 form {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 15px;
   margin-bottom: 20px;
 }
 
 input {
-  padding: 10px;
+  padding: 12px;
   font-size: 16px;
+  border: 1px solid var(--primary-color);
+  border-radius: 4px;
+  background-color: var(--input-bg);
+  color: var(--text-color);
 }
 
 button {
-  padding: 10px;
+  padding: 12px;
   font-size: 16px;
-  background-color: #007bff;
-  color: white;
+  background-color: var(--primary-color);
+  color: var(--button-text);
   border: none;
+  border-radius: 4px;
   cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background-color: var(--secondary-color);
 }
 
 button:disabled {
   background-color: #cccccc;
+  cursor: not-allowed;
 }
 
 .error {
-  color: red;
+  color: var(--error-color);
+  font-weight: bold;
 }
 
 audio {
   width: 100%;
   margin-top: 20px;
+}
+
+.history {
+  display: grid;
+  gap: 20px;
+  padding: 20px;
+}
+
+.no-history {
+  text-align: center;
+  color: var(--text-color);
+  font-style: italic;
+}
+
+.history-item {
+  background-color: var(--card-bg);
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+.history-item:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.history-title {
+  margin: 0 0 15px 0;
+  color: var(--primary-color);
+  font-size: 1.2rem;
+}
+
+.history-links {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.history-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.history-link i {
+  margin-right: 5px;
+}
+
+.history-link.listen {
+  background-color: var(--secondary-color);
+  color: white;
+}
+
+.history-link.original {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.history-link:hover {
+  opacity: 0.9;
+}
+
+.delete-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: var(--error-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.delete-btn:hover {
+  background-color: #c0392b;
+}
+
+.delete-btn i {
+  margin-right: 5px;
+}
+
+@media (max-width: 600px) {
+  .App {
+    padding: 10px;
+  }
+
+  .tabs button {
+    font-size: 14px;
+  }
+
+  .history {
+    padding: 10px;
+  }
+
+  .history-item {
+    padding: 15px;
+  }
+
+  .history-links {
+    flex-direction: column;
+  }
+
+  .history-link,
+  .delete-btn {
+    width: 100%;
+    justify-content: center;
+  }
 }
