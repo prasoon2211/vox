@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import ReactHowler from "react-howler";
 import { FaPlay, FaPause, FaBackward, FaForward } from "react-icons/fa";
-import { MdSpeed } from "react-icons/md";
+// import { MdSpeed } from "react-icons/md";
 
 const AudioPlayer = ({ src, title, playing, onTogglePlay }) => {
   const [duration, setDuration] = useState(0);
@@ -13,6 +13,8 @@ const AudioPlayer = ({ src, title, playing, onTogglePlay }) => {
   const playerRef = useRef(null);
   const rafRef = useRef(null);
   const isLoadedRef = useRef(false);
+  // eslint-disable-next-line no-unused-vars
+  const [formattedTime, setFormattedTime] = useState("0:00 / 0:00");
 
   useEffect(() => {
     setAudioSrc(
@@ -28,6 +30,12 @@ const AudioPlayer = ({ src, title, playing, onTogglePlay }) => {
   }, [src]);
 
   const togglePlay = () => onTogglePlay();
+
+  const formatTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+  };
 
   const handleOnLoad = () => {
     const duration = playerRef.current.duration();
@@ -48,7 +56,9 @@ const AudioPlayer = ({ src, title, playing, onTogglePlay }) => {
 
   const updateSeek = () => {
     if (playerRef.current && isLoadedRef.current) {
-      setSeek(playerRef.current.seek());
+      const currentSeek = playerRef.current.seek();
+      setSeek(currentSeek);
+      setFormattedTime(`${formatTime(currentSeek)} / ${formatTime(duration)}`);
       rafRef.current = requestAnimationFrame(updateSeek);
     }
   };
@@ -69,68 +79,87 @@ const AudioPlayer = ({ src, title, playing, onTogglePlay }) => {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-gray-800 text-white p-4">
-      <div className="text-center mb-2">{title}</div>
-      {audioSrc && (
-        <ReactHowler
-          src={audioSrc}
-          playing={playing}
-          ref={playerRef}
-          onLoad={handleOnLoad}
-          onPlay={handleOnPlay}
-          onEnd={handleOnEnd}
-          rate={rate}
-          format={["mp3"]}
-          html5={true}
-        />
-      )}
-      <div className="flex items-center justify-center space-x-4">
-        <button onClick={() => handleSeek(-15)} className="focus:outline-none">
-          <FaBackward />
-        </button>
-        <button onClick={togglePlay} className="focus:outline-none">
-          {playing ? <FaPause /> : <FaPlay />}
-        </button>
-        <button onClick={() => handleSeek(15)} className="focus:outline-none">
-          <FaForward />
-        </button>
-        <div className="relative">
-          <button
-            onClick={() => setShowSpeedOptions(!showSpeedOptions)}
-            className="focus:outline-none"
-          >
-            <MdSpeed /> {rate}x
-          </button>
-          {showSpeedOptions && (
-            <div className="absolute bottom-full mb-2 bg-gray-700 rounded p-2">
-              {[0.5, 0.75, 1, 1.25, 1.5, 1.75, 2].map((speed) => (
-                <button
-                  key={speed}
-                  onClick={() => handleSpeedChange(speed)}
-                  className={`block w-full text-left px-2 py-1 ${
-                    rate === speed ? "bg-gray-600" : ""
-                  }`}
-                >
-                  {speed}x
-                </button>
-              ))}
+    <div className="fixed bottom-0 left-0 right-0 bg-gray-800 text-white p-4 shadow-lg">
+      <div className="max-w-3xl mx-auto">
+        <div className="text-center font-bold mb-2">{title}</div>
+        {audioSrc && (
+          <ReactHowler
+            src={audioSrc}
+            playing={playing}
+            ref={playerRef}
+            onLoad={handleOnLoad}
+            onPlay={handleOnPlay}
+            onEnd={handleOnEnd}
+            rate={rate}
+            format={["mp3"]}
+            html5={true}
+          />
+        )}
+        <div className="flex flex-col items-center mb-2">
+          <div className="flex items-center justify-center space-x-4 mb-2">
+            <button
+              onClick={() => handleSeek(-15)}
+              className="focus:outline-none hover:text-gray-300"
+            >
+              <FaBackward />
+            </button>
+            <button
+              onClick={togglePlay}
+              className="focus:outline-none hover:text-gray-300 text-2xl"
+            >
+              {playing ? <FaPause /> : <FaPlay />}
+            </button>
+            <button
+              onClick={() => handleSeek(15)}
+              className="focus:outline-none hover:text-gray-300"
+            >
+              <FaForward />
+            </button>
+          </div>
+          <div className="flex items-center justify-between w-full">
+            <div className="text-sm">{formatTime(seek)}</div>
+            <div className="relative">
+              <button
+                onClick={() => setShowSpeedOptions(!showSpeedOptions)}
+                className="focus:outline-none hover:text-gray-300 text-sm"
+              >
+                {rate}x
+              </button>
+              {showSpeedOptions && (
+                <div className="absolute bottom-full right-0 mb-2 bg-gray-700 rounded p-2">
+                  {[0.5, 0.75, 1, 1.25, 1.5, 1.75, 2].map((speed) => (
+                    <button
+                      key={speed}
+                      onClick={() => handleSpeedChange(speed)}
+                      className={`block w-full text-left px-2 py-1 text-sm ${
+                        rate === speed ? "bg-gray-600" : ""
+                      }`}
+                    >
+                      {speed}x
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
+            <div className="text-sm">{formatTime(duration)}</div>
+          </div>
         </div>
-      </div>
-      <div className="mt-2">
-        <input
-          type="range"
-          min={0}
-          max={duration}
-          value={seek}
-          onChange={(e) => {
-            if (playerRef.current && isLoaded) {
-              playerRef.current.seek(parseFloat(e.target.value));
-            }
-          }}
-          className="w-full"
-        />
+        <div className="relative pt-1">
+          <input
+            type="range"
+            min={0}
+            max={duration}
+            value={seek}
+            onChange={(e) => {
+              if (playerRef.current && isLoaded) {
+                const newSeek = parseFloat(e.target.value);
+                playerRef.current.seek(newSeek);
+                setSeek(newSeek);
+              }
+            }}
+            className="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer"
+          />
+        </div>
       </div>
     </div>
   );
