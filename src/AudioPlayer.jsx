@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import ReactHowler from "react-howler";
-import { FaPlay, FaPause, FaBackward, FaForward } from "react-icons/fa";
-// import { MdSpeed } from "react-icons/md";
+import { FaPlay, FaPause, FaUndo, FaRedo, FaClock } from "react-icons/fa";
 
 const AudioPlayer = ({ src, title, playing, onTogglePlay }) => {
   const [duration, setDuration] = useState(0);
@@ -79,9 +78,11 @@ const AudioPlayer = ({ src, title, playing, onTogglePlay }) => {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-gray-800 text-white p-4 shadow-lg">
+    <div className="fixed bottom-0 left-0 right-0 bg-gray-800 text-white p-2 shadow-lg">
       <div className="max-w-3xl mx-auto">
-        <div className="text-center font-bold mb-2">{title}</div>
+        <div className="text-center font-bold text-sm mb-1 truncate">
+          {title}
+        </div>
         {audioSrc && (
           <ReactHowler
             src={audioSrc}
@@ -95,56 +96,7 @@ const AudioPlayer = ({ src, title, playing, onTogglePlay }) => {
             html5={true}
           />
         )}
-        <div className="flex flex-col items-center mb-2">
-          <div className="flex items-center justify-center space-x-4 mb-2">
-            <button
-              onClick={() => handleSeek(-15)}
-              className="focus:outline-none hover:text-gray-300"
-            >
-              <FaBackward />
-            </button>
-            <button
-              onClick={togglePlay}
-              className="focus:outline-none hover:text-gray-300 text-2xl"
-            >
-              {playing ? <FaPause /> : <FaPlay />}
-            </button>
-            <button
-              onClick={() => handleSeek(15)}
-              className="focus:outline-none hover:text-gray-300"
-            >
-              <FaForward />
-            </button>
-          </div>
-          <div className="flex items-center justify-between w-full">
-            <div className="text-sm">{formatTime(seek)}</div>
-            <div className="relative">
-              <button
-                onClick={() => setShowSpeedOptions(!showSpeedOptions)}
-                className="focus:outline-none hover:text-gray-300 text-sm"
-              >
-                {rate}x
-              </button>
-              {showSpeedOptions && (
-                <div className="absolute bottom-full right-0 mb-2 bg-gray-700 rounded p-2">
-                  {[0.5, 0.75, 1, 1.25, 1.5, 1.75, 2].map((speed) => (
-                    <button
-                      key={speed}
-                      onClick={() => handleSpeedChange(speed)}
-                      className={`block w-full text-left px-2 py-1 text-sm ${
-                        rate === speed ? "bg-gray-600" : ""
-                      }`}
-                    >
-                      {speed}x
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="text-sm">{formatTime(duration)}</div>
-          </div>
-        </div>
-        <div className="relative pt-1">
+        <div className="relative">
           <input
             type="range"
             min={0}
@@ -157,8 +109,65 @@ const AudioPlayer = ({ src, title, playing, onTogglePlay }) => {
                 setSeek(newSeek);
               }
             }}
-            className="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer"
+            className="w-full h-1 bg-gray-600 rounded-full appearance-none cursor-pointer"
+            style={{
+              background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${
+                (seek / duration) * 100
+              }%, #4b5563 ${(seek / duration) * 100}%, #4b5563 100%)`,
+            }}
           />
+        </div>
+        <div className="flex items-center justify-between mt-1">
+          <div className="text-xs">{formatTime(seek)}</div>
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => handleSeek(-15)}
+              className="focus:outline-none hover:text-blue-400 transition-colors duration-200"
+            >
+              <FaUndo className="w-5 h-5" />
+            </button>
+            <button
+              onClick={togglePlay}
+              className="focus:outline-none hover:text-blue-400 transition-colors duration-200"
+            >
+              {playing ? (
+                <FaPause className="w-5 h-5" />
+              ) : (
+                <FaPlay className="w-5 h-5" />
+              )}
+            </button>
+            <button
+              onClick={() => handleSeek(15)}
+              className="focus:outline-none hover:text-blue-400 transition-colors duration-200"
+            >
+              <FaRedo className="w-5 h-5" />
+            </button>
+            <div className="relative">
+              <button
+                onClick={() => setShowSpeedOptions(!showSpeedOptions)}
+                className="focus:outline-none hover:text-blue-400 transition-colors duration-200 flex items-center"
+              >
+                <FaClock className="w-5 h-5" />
+                <span className="ml-1 text-xs">{rate}x</span>
+              </button>
+              {showSpeedOptions && (
+                <div className="absolute bottom-full right-0 mb-2 bg-gray-700 rounded p-1">
+                  {[0.5, 0.75, 1, 1.25, 1.5, 1.75, 2].map((speed) => (
+                    <button
+                      key={speed}
+                      onClick={() => handleSpeedChange(speed)}
+                      className={`block w-full text-left px-2 py-1 text-xs ${
+                        rate === speed ? "bg-blue-600" : "hover:bg-gray-600"
+                      }`}
+                    >
+                      {speed}x
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="text-xs">{formatTime(duration)}</div>
         </div>
       </div>
     </div>

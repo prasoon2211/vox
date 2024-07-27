@@ -11,6 +11,15 @@ import { ExternalLink } from "lucide-react";
 import { Search } from "lucide-react";
 import { Play, Trash2, Download } from "lucide-react";
 import Fuse from "fuse.js"; // Add this import for fuzzy search
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 import AudioPlayer from "./AudioPlayer";
 
@@ -25,6 +34,8 @@ function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [searchTerm, setSearchTerm] = useState(""); // Add this state
   const [filteredHistory, setFilteredHistory] = useState([]); // Add this state
+  const [deleteIndex, setDeleteIndex] = useState(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -235,6 +246,14 @@ function App() {
     }
   };
 
+  const handleDeleteConfirm = () => {
+    if (deleteIndex !== null) {
+      deleteHistoryItem(deleteIndex);
+      setIsDeleteDialogOpen(false);
+      setDeleteIndex(null);
+    }
+  };
+
   const downloadHistoryItem = (item) => {
     const url = window.URL.createObjectURL(item.audioBlob);
     const a = document.createElement("a");
@@ -345,9 +364,9 @@ function App() {
           value="history"
           className={`flex-grow overflow-y-auto ${currentAudio ? "pb-32" : ""}`}
         >
-          <div className="space-y-6 pb-4">
+          <div className="space-y-4 pb-4">
             {" "}
-            {/* Added pb-4 for extra padding at the bottom */}
+            {/* Reduced space-y-6 to space-y-4 */}
             <div className="relative">
               <Input
                 type="text"
@@ -404,13 +423,46 @@ function App() {
                       >
                         <Download className="w-6 h-6" />
                       </button>
-                      <button
-                        onClick={() => deleteHistoryItem(index)}
-                        className="text-gray-600 hover:text-red-600 transition-colors duration-200"
-                        aria-label="Delete History"
+                      <Dialog
+                        open={isDeleteDialogOpen}
+                        onOpenChange={setIsDeleteDialogOpen}
                       >
-                        <Trash2 className="w-6 h-6" />
-                      </button>
+                        <DialogTrigger asChild>
+                          <button
+                            onClick={() => {
+                              setDeleteIndex(index);
+                              setIsDeleteDialogOpen(true);
+                            }}
+                            className="text-gray-600 hover:text-red-600 transition-colors duration-200"
+                            aria-label="Delete History"
+                          >
+                            <Trash2 className="w-6 h-6" />
+                          </button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[425px]">
+                          <DialogHeader>
+                            <DialogTitle>Confirm Deletion</DialogTitle>
+                            <DialogDescription>
+                              Are you sure you want to delete this item? This
+                              action cannot be undone.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <DialogFooter>
+                            <Button
+                              variant="outline"
+                              onClick={() => setIsDeleteDialogOpen(false)}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              onClick={handleDeleteConfirm}
+                            >
+                              Delete
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
                     </div>
                   </div>
                 </div>
