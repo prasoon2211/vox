@@ -9,55 +9,35 @@ const AudioPlayer = ({ src, title, playing, onTogglePlay }) => {
   const [rate, setRate] = useState(1);
   const [showSpeedOptions, setShowSpeedOptions] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [audioSrc, setAudioSrc] = useState(null);
   const playerRef = useRef(null);
   const rafRef = useRef(null);
-  const [audioSrc, setAudioSrc] = useState(null);
   const isLoadedRef = useRef(false);
 
   useEffect(() => {
-    console.log("isLoaded state changed:", isLoaded);
-  }, [isLoaded]);
-
-  useEffect(() => {
+    setAudioSrc(
+      src.startsWith("blob:") ? src : src.includes(".") ? src : `${src}.mp3`
+    );
+    setIsLoaded(false);
     return () => {
       if (rafRef.current) {
         cancelAnimationFrame(rafRef.current);
       }
-      isLoadedRef.current = false; // Reset on unmount
+      isLoadedRef.current = false;
     };
-  }, []);
-
-  useEffect(() => {
-    if (src.startsWith("blob:")) {
-      setAudioSrc(src);
-    } else {
-      setAudioSrc(src.includes(".") ? src : `${src}.mp3`);
-    }
-    setIsLoaded(false);
   }, [src]);
 
-  useEffect(() => {
-    return () => {
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-      }
-    };
-  }, []);
-
-  const togglePlay = () => onTogglePlay(); // Call the passed function to toggle play
+  const togglePlay = () => onTogglePlay();
 
   const handleOnLoad = () => {
     const duration = playerRef.current.duration();
     setDuration(duration);
     setIsLoaded(true);
-    isLoadedRef.current = true; // Update ref when audio is loaded
-    console.log("Audio is loaded, duration set:", duration);
+    isLoadedRef.current = true;
   };
 
   const handleOnPlay = () => {
-    console.log("Audio started playing, isLoadedRef:", isLoadedRef.current);
     if (isLoadedRef.current) {
-      console.log("Starting seek update");
       rafRef.current = requestAnimationFrame(updateSeek);
     }
   };
@@ -68,7 +48,6 @@ const AudioPlayer = ({ src, title, playing, onTogglePlay }) => {
 
   const updateSeek = () => {
     if (playerRef.current && isLoadedRef.current) {
-      console.log("Executing updateSeek", playerRef.current.seek());
       setSeek(playerRef.current.seek());
       rafRef.current = requestAnimationFrame(updateSeek);
     }
