@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { Readability } from "@mozilla/readability";
 import OpenAI from "openai";
@@ -16,6 +16,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
+import AudioPlayer from "./AudioPlayer";
+
 function App() {
   const [apiKey, setApiKey] = useState("");
   const [apiKeyInput, setApiKeyInput] = useState("");
@@ -24,7 +26,8 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [history, setHistory] = useState([]);
-  const audioRef = useRef(null);
+  // const audioRef = useRef(null);
+  const [currentAudio, setCurrentAudio] = useState(null);
 
   useEffect(() => {
     try {
@@ -211,10 +214,19 @@ function App() {
   };
 
   const playHistoryItem = (item) => {
-    setUrl(item.pageUrl); // Update the URL
-    setAudioUrl(item.audioUrl); // Update the audio URL
-    if (audioRef.current) {
-      audioRef.current.play();
+    setUrl(item.pageUrl);
+    setCurrentAudio({
+      url: item.audioUrl,
+      title: item.title,
+    });
+  };
+
+  const playConvertedAudio = () => {
+    if (audioUrl) {
+      setCurrentAudio({
+        url: audioUrl,
+        title: url, // Using the URL as a fallback title
+      });
     }
   };
 
@@ -260,14 +272,11 @@ function App() {
               </form>
               {error && <p className="text-red-500 mt-2">{error}</p>}
               {audioUrl && (
-                <audio
-                  ref={audioRef}
-                  controls
-                  src={audioUrl}
-                  className="w-full mt-4"
-                >
-                  Your browser does not support the audio element.
-                </audio>
+                <div className="mt-4">
+                  <Button onClick={playConvertedAudio}>
+                    Play Converted Audio
+                  </Button>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -321,6 +330,13 @@ function App() {
           </Card>
         </TabsContent>
       </Tabs>
+      {currentAudio && (
+        <AudioPlayer
+          key={currentAudio.url}
+          src={currentAudio.url}
+          title={currentAudio.title}
+        />
+      )}
     </div>
   );
 }
