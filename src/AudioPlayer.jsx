@@ -3,41 +3,6 @@ import ReactHowler from "react-howler";
 import { FaPlay, FaPause, FaBackward, FaForward } from "react-icons/fa";
 import { MdSpeed } from "react-icons/md";
 
-const createPitchShifter = (context) => {
-  const shifter = context.createScriptProcessor(16384, 1, 1);
-  shifter.buffer = new Float32Array(16384);
-  shifter.grainWindow = shifter.buffer.slice(0);
-  for (let i = 0; i < shifter.grainWindow.length; i++) {
-    shifter.grainWindow[i] = Math.sin(
-      (Math.PI * i) / shifter.grainWindow.length
-    );
-  }
-  shifter.grainSize = shifter.grainWindow.length / 2;
-  shifter.phase = 0;
-  shifter.phaseDelta = 0;
-  shifter.lastInputs = new Float32Array(shifter.grainSize * 2);
-
-  shifter.onaudioprocess = (event) => {
-    const inputData = event.inputBuffer.getChannelData(0);
-    const outputData = event.outputBuffer.getChannelData(0);
-
-    for (let i = 0; i < inputData.length; i++) {
-      shifter.lastInputs[i] = inputData[i];
-      let rp = Math.floor(shifter.phase);
-      shifter.buffer[i] = shifter.lastInputs[rp];
-      shifter.phase += shifter.phaseDelta;
-      if (shifter.phase >= shifter.lastInputs.length) {
-        shifter.phase -= shifter.lastInputs.length;
-      }
-    }
-    for (let i = 0; i < outputData.length; i++) {
-      outputData[i] = shifter.buffer[i] * shifter.grainWindow[i];
-    }
-  };
-
-  return shifter;
-};
-
 const AudioPlayer = ({ src, title }) => {
   const [playing, setPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
@@ -47,20 +12,14 @@ const AudioPlayer = ({ src, title }) => {
   const playerRef = useRef(null);
   const rafRef = useRef(null);
   const [audioSrc, setAudioSrc] = useState(null);
-  const [pitchShifter, setPitchShifter] = useState(null);
 
   useEffect(() => {
-    if (playerRef.current && playerRef.current.howler) {
-      const context = playerRef.current.howler.ctx;
-      const shifter = createPitchShifter(context);
-      setPitchShifter(shifter);
-
-      // Connect the pitch shifter
-      playerRef.current.howler._sounds[0]._node.disconnect();
-      playerRef.current.howler._sounds[0]._node.connect(shifter);
-      shifter.connect(context.destination);
+    if (src.startsWith("blob:")) {
+      setAudioSrc(src);
+    } else {
+      setAudioSrc(src.includes(".") ? src : `${src}.mp3`);
     }
-  }, []);
+  }, [src]);
 
   useEffect(() => {
     return () => {
@@ -69,16 +28,6 @@ const AudioPlayer = ({ src, title }) => {
       }
     };
   }, []);
-
-  useEffect(() => {
-    // Handle Blob URL
-    if (src.startsWith("blob:")) {
-      setAudioSrc(src);
-    } else {
-      // For other URLs, append a default extension if missing
-      setAudioSrc(src.includes(".") ? src : `${src}.mp3`);
-    }
-  }, [src]);
 
   const togglePlay = () => setPlaying(!playing);
 
@@ -108,9 +57,8 @@ const AudioPlayer = ({ src, title }) => {
 
   const handleSpeedChange = (newRate) => {
     setRate(newRate);
-    if (playerRef.current && pitchShifter) {
+    if (playerRef.current && playerRef.current.howler) {
       playerRef.current.howler.rate(newRate);
-      pitchShifter.phaseDelta = 1 / newRate;
     }
     setShowSpeedOptions(false);
   };
@@ -127,7 +75,7 @@ const AudioPlayer = ({ src, title }) => {
           onPlay={handleOnPlay}
           onEnd={handleOnEnd}
           rate={rate}
-          format={["mp3"]} // Add this line to specify the format
+          format={["mp3"]}
         />
       )}
       <div className="flex items-center justify-center space-x-4">
