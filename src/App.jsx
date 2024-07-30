@@ -23,7 +23,29 @@ import {
 
 import AudioPlayer from "./AudioPlayer";
 
-const CORS_PROXY = "https://corsproxy.io";
+const fetchURLContents = async (url) => {
+  const corsProxies = [
+    "https://corsproxy.io/?",
+    "https://api.allorigins.win/raw?url=",
+    "https://thingproxy.freeboard.io/fetch/",
+    "https://api.codetabs.com/v1/proxy?quest=",
+  ];
+
+  for (const proxy of corsProxies) {
+    const proxyUrl = `${proxy}${encodeURIComponent(url)}`;
+
+    try {
+      const response = await axios.get(proxyUrl);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching with proxy ${proxy}:`, error);
+      // Continue to the next proxy if there's an error
+    }
+  }
+
+  // If all proxies fail, throw an error
+  throw new Error("All proxies failed to fetch the URL");
+};
 
 function App() {
   const [apiKey, setApiKey] = useState("");
@@ -169,10 +191,7 @@ function App() {
       // Fetch article
       let response;
       try {
-        response = await axios.get(
-          `${CORS_PROXY}/${encodeURIComponent(url)}`,
-          { timeout: 10000 } // Set a timeout of 10 seconds
-        );
+        response = await fetchURLContents(url);
       } catch (fetchError) {
         if (fetchError.code === "ECONNABORTED") {
           throw new Error(
