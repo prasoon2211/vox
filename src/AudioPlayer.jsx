@@ -20,13 +20,41 @@ const AudioPlayer = ({ src, title, playing, onTogglePlay }) => {
       src.startsWith("blob:") ? src : src.includes(".") ? src : `${src}.mp3`
     );
     setIsLoaded(false);
+
+    // Set up MediaSession
+    if ("mediaSession" in navigator) {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: title,
+      });
+
+      navigator.mediaSession.setActionHandler("play", () => {
+        onTogglePlay();
+      });
+
+      navigator.mediaSession.setActionHandler("pause", () => {
+        onTogglePlay();
+      });
+    }
+
     return () => {
       if (rafRef.current) {
         cancelAnimationFrame(rafRef.current);
       }
       isLoadedRef.current = false;
+
+      // Clear MediaSession handlers
+      if ("mediaSession" in navigator) {
+        navigator.mediaSession.setActionHandler("play", null);
+        navigator.mediaSession.setActionHandler("pause", null);
+      }
     };
-  }, [src]);
+  }, [src, title, onTogglePlay]);
+
+  useEffect(() => {
+    if ("mediaSession" in navigator) {
+      navigator.mediaSession.playbackState = playing ? "playing" : "paused";
+    }
+  }, [playing]);
 
   const togglePlay = () => onTogglePlay();
 
