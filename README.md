@@ -30,6 +30,39 @@ Or, to use locally:
 
 Note: This application uses a CORS proxy to fetch article content. You can change the CORS proxy URL in the App.jsx file if needed. However, some websites may still refuse to serve content or block requests from the proxy. If you encounter errors when fetching certain URLs, you can use a different CORS proxy by changing the `CORS_PROXY` variable at the top of the App.jsx file. This is on the roadmap to fix by using a rotation of proxies.
 
+## How to Get an OpenAI API Key
+
+Follow these steps to obtain an OpenAI API key:
+
+### 1. **Create an OpenAI Account**
+
+- Visit the [OpenAI website](https://platform.openai.com/signup).
+- Sign up with your email or use your existing Google or Microsoft account.
+
+### 2. **Log in to the OpenAI Platform**
+
+- After signing up, log in at [platform.openai.com](https://platform.openai.com/login).
+
+### 3. **Navigate to the API Keys Section**
+
+- Once logged in, go to the [API keys page](https://platform.openai.com/account/api-keys).
+- This page can also be found by clicking on your profile in the top-right corner and selecting "API Keys" from the dropdown menu.
+
+### 4. **Create a New API Key**
+
+- Click the "Create new secret key" button.
+- A new API key will be generated and displayed. **Important:** Copy and save this key securely as it will not be shown again.
+
+### 5. **Use the API Key**
+
+- You can now use this key to authenticate requests to OpenAI's API.
+
+### 6. **Secure Your API Key**
+
+- Treat your API key like a password. Do not share it publicly or in code repositories.
+
+For detailed documentation on using the API, refer to [OpenAI's API documentation](https://platform.openai.com/docs).
+
 ## License
 
 This project is open-source and available under the MIT License.

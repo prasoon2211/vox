@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { Readability } from "@mozilla/readability";
@@ -20,6 +21,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { ChevronDown, ChevronUp } from "lucide-react"; // Add these imports
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"; // Add this import
 
 import AudioPlayer from "./AudioPlayer";
 
@@ -60,12 +69,18 @@ function App() {
   const [filteredHistory, setFilteredHistory] = useState([]); // Add this state
   const [deleteIndex, setDeleteIndex] = useState(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [showOptions, setShowOptions] = useState(false);
+  const [voiceOption, setVoiceOption] = useState("alloy");
 
   useEffect(() => {
     try {
       const storedApiKey = localStorage.getItem("openaiApiKey");
+      const storedVoiceOption = localStorage.getItem("voiceOption");
       if (storedApiKey) {
         setApiKey(storedApiKey);
+      }
+      if (storedVoiceOption) {
+        setVoiceOption(storedVoiceOption);
       }
     } catch (error) {
       console.error("Error accessing localStorage:", error);
@@ -157,6 +172,11 @@ function App() {
     }
   };
 
+  const handleVoiceOptionChange = (value) => {
+    setVoiceOption(value);
+    localStorage.setItem("voiceOption", value);
+  };
+
   const chunkText = (text, maxLength = 4000) => {
     const chunks = [];
     const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
@@ -241,7 +261,7 @@ function App() {
       const audioPromises = chunks.map((chunk) =>
         openai.audio.speech.create({
           model: "tts-1",
-          voice: "alloy",
+          voice: voiceOption,
           input: chunk,
         })
       );
@@ -386,9 +406,103 @@ function App() {
                     : "Convert to Speech"
                   : "Save API Key"}
               </Button>
+              {apiKey && (
+                <div className="mt-2">
+                  <Button
+                    type="button"
+                    onClick={() => setShowOptions(!showOptions)}
+                    variant="outline"
+                    className="w-full flex justify-between items-center"
+                  >
+                    <span>Options</span>
+                    {showOptions ? (
+                      <ChevronUp className="w-4 h-4" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4" />
+                    )}
+                  </Button>
+                  {showOptions && (
+                    <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Select Narration Voice
+                      </label>
+                      <Select
+                        value={voiceOption}
+                        onValueChange={handleVoiceOptionChange}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select a voice" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="alloy">Alloy</SelectItem>
+                          <SelectItem value="echo">Echo</SelectItem>
+                          <SelectItem value="fable">Fable</SelectItem>
+                          <SelectItem value="onyx">Onyx</SelectItem>
+                          <SelectItem value="nova">Nova</SelectItem>
+                          <SelectItem value="shimmer">Shimmer</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <div className="mt-2 ml-1 text-sm">
+                        {" "}
+                        <a
+                          href="https://platform.openai.com/docs/guides/text-to-speech/voice-options"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline"
+                        >
+                          Listen to samples here
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </form>
             {error && (
               <p className="text-red-500 text-sm text-center mt-2">{error}</p>
+            )}
+            {!apiKey && (
+              <div className="mt-4 p-4 bg-gray-100 rounded-lg">
+                <h3 className="text-lg font-semibold mb-2">
+                  Help Instructions:
+                </h3>
+                <ul className="list-disc pl-5 space-y-2">
+                  <li>You need an OpenAI API key to use this app.</li>
+                  <li>
+                    To get an API key:
+                    <ol className="list-decimal pl-5 mt-2 space-y-1">
+                      <li>
+                        <a
+                          href="https://platform.openai.com/signup"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline"
+                        >
+                          Sign up
+                        </a>{" "}
+                        or log in to OpenAI.
+                      </li>
+                      <li>
+                        Go to{" "}
+                        <a
+                          href="https://platform.openai.com/account/api-keys"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline"
+                        >
+                          API Keys
+                        </a>{" "}
+                        page in your profile.
+                      </li>
+                      <li>Create a new API key and save it securely.</li>
+                    </ol>
+                  </li>
+                  <li>Enter your API key above and click "Save API Key".</li>
+                  <li>
+                    Your key is stored locally and not sent to any server.
+                  </li>
+                </ul>
+              </div>
             )}
           </div>
         </TabsContent>{" "}
@@ -440,7 +554,7 @@ function App() {
                             item.duration % 60
                           )} sec`}
                     </p>
-                    <div className="flex justify-between items-center mt-4">
+                    <div className="flex items-center mt-4 space-x-6">
                       <button
                         onClick={() => playHistoryItem(item)}
                         className="text-gray-600 hover:text-blue-600 transition-colors duration-200"
