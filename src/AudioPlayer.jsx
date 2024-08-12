@@ -104,7 +104,9 @@ const AudioPlayer = ({ src, title, playing, onTogglePlay }) => {
   const handleSeek = (direction) => {
     if (playerRef.current && isLoaded) {
       const newSeek = playerRef.current.seek() + direction;
+      playerRef.current.stop(); // Stop the current audio
       playerRef.current.seek(Math.max(0, Math.min(newSeek, duration)));
+      playerRef.current.play(); // Resume playing after seeking
     }
   };
 
