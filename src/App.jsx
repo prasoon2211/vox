@@ -476,7 +476,7 @@ function App() {
         <TabsContent value="convert" className="flex-grow">
           <div className="space-y-6">
             <h2 className="text-2xl font-semibold text-center">
-              {apiKey ? "Convert URL to Speech" : "Enter API Key"}
+              {apiKey ? "Listen to articles" : "Enter API Key"}
             </h2>
             <form
               onSubmit={apiKey ? handleUrlSubmit : handleApiKeySubmit}
@@ -517,7 +517,7 @@ function App() {
                 {apiKey
                   ? isLoading
                     ? "Converting..."
-                    : "Convert to Speech"
+                    : "Convert to audio"
                   : "Save API Key"}
               </Button>
               {apiKey && (

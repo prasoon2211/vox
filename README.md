@@ -1,4 +1,4 @@
-# Article to Speech Converter
+# Vox - Listen to articles
 
 This React application converts web articles to speech using OpenAI's Text-to-Speech API. Users can input article URLs, convert them to audio, and manage their audio history.
 
