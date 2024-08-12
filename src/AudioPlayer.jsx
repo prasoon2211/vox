@@ -12,8 +12,9 @@ const AudioPlayer = ({ src, title, playing, onTogglePlay }) => {
   const playerRef = useRef(null);
   const rafRef = useRef(null);
   const isLoadedRef = useRef(false);
-  // eslint-disable-next-line no-unused-vars
-  const [formattedTime, setFormattedTime] = useState("0:00 / 0:00");
+  const [setFormattedTime] = useState("0:00 / 0:00");
+  const [isDragging, setIsDragging] = useState(false);
+  const [tempSeek, setTempSeek] = useState(0);
 
   useEffect(() => {
     setAudioSrc(
@@ -97,6 +98,26 @@ const AudioPlayer = ({ src, title, playing, onTogglePlay }) => {
     }
   };
 
+  const handleMouseDown = () => {
+    setIsDragging(true);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+    if (playerRef.current && isLoaded) {
+      playerRef.current.seek(tempSeek);
+      setSeek(tempSeek);
+    }
+  };
+
+  const handleSeekChange = (e) => {
+    const newSeek = parseFloat(e.target.value);
+    setTempSeek(newSeek);
+    if (!isDragging) {
+      setSeek(newSeek);
+    }
+  };
+
   const handleSpeedChange = (newRate) => {
     setRate(newRate);
     if (playerRef.current && playerRef.current.howler) {
@@ -129,19 +150,19 @@ const AudioPlayer = ({ src, title, playing, onTogglePlay }) => {
             type="range"
             min={0}
             max={duration}
-            value={seek}
-            onChange={(e) => {
-              if (playerRef.current && isLoaded) {
-                const newSeek = parseFloat(e.target.value);
-                playerRef.current.seek(newSeek);
-                setSeek(newSeek);
-              }
-            }}
+            value={isDragging ? tempSeek : seek}
+            onChange={handleSeekChange}
+            onMouseDown={handleMouseDown}
+            onMouseUp={handleMouseUp}
+            onTouchStart={handleMouseDown}
+            onTouchEnd={handleMouseUp}
             className="w-full h-1 bg-gray-600 rounded-full appearance-none cursor-pointer"
             style={{
               background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${
-                (seek / duration) * 100
-              }%, #4b5563 ${(seek / duration) * 100}%, #4b5563 100%)`,
+                ((isDragging ? tempSeek : seek) / duration) * 100
+              }%, #4b5563 ${
+                ((isDragging ? tempSeek : seek) / duration) * 100
+              }%, #4b5563 100%)`,
             }}
           />
         </div>
