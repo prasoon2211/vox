@@ -118,8 +118,31 @@ const AudioPlayer = ({ src, title, playing, onTogglePlay }) => {
           />
         </div>
         <div className="flex items-center justify-between mt-1">
-          <div className="text-xs">{formatTime(seek)}</div>
-          <div className="flex items-center space-x-4">
+          <div className="relative w-20">
+            <button
+              onClick={() => setShowSpeedOptions(!showSpeedOptions)}
+              className="focus:outline-none hover:text-blue-400 transition-colors duration-200 flex items-center"
+            >
+              <FaClock className="w-5 h-5" />
+              <span className="ml-1 text-xs">{rate}x</span>
+            </button>
+            {showSpeedOptions && (
+              <div className="absolute bottom-full left-0 mb-2 bg-gray-700 rounded p-1 shadow-lg z-10">
+                {[0.5, 0.75, 1, 1.25, 1.5, 1.75, 2].map((speed) => (
+                  <button
+                    key={speed}
+                    onClick={() => handleSpeedChange(speed)}
+                    className={`block w-full text-left px-2 py-1 text-xs ${
+                      rate === speed ? "bg-blue-600" : "hover:bg-gray-600"
+                    }`}
+                  >
+                    {speed}x
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="flex-grow flex items-center justify-center space-x-4">
             <button
               onClick={() => handleSeek(-15)}
               className="focus:outline-none hover:text-blue-400 transition-colors duration-200"
@@ -142,32 +165,10 @@ const AudioPlayer = ({ src, title, playing, onTogglePlay }) => {
             >
               <FaRedo className="w-5 h-5" />
             </button>
-            <div className="relative">
-              <button
-                onClick={() => setShowSpeedOptions(!showSpeedOptions)}
-                className="focus:outline-none hover:text-blue-400 transition-colors duration-200 flex items-center"
-              >
-                <FaClock className="w-5 h-5" />
-                <span className="ml-1 text-xs">{rate}x</span>
-              </button>
-              {showSpeedOptions && (
-                <div className="absolute bottom-full right-0 mb-2 bg-gray-700 rounded p-1">
-                  {[0.5, 0.75, 1, 1.25, 1.5, 1.75, 2].map((speed) => (
-                    <button
-                      key={speed}
-                      onClick={() => handleSpeedChange(speed)}
-                      className={`block w-full text-left px-2 py-1 text-xs ${
-                        rate === speed ? "bg-blue-600" : "hover:bg-gray-600"
-                      }`}
-                    >
-                      {speed}x
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
           </div>
-          <div className="text-xs">{formatTime(duration)}</div>
+          <div className="text-xs w-20 text-right">
+            {`${formatTime(seek)} / ${formatTime(duration)}`}
+          </div>
         </div>
       </div>
     </div>

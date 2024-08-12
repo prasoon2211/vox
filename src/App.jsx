@@ -25,14 +25,14 @@ import AudioPlayer from "./AudioPlayer";
 
 const fetchURLContents = async (url) => {
   const corsProxies = [
-    "https://corsproxy.io/?",
+    "https://corsproxy.io/",
     "https://api.allorigins.win/raw?url=",
     "https://thingproxy.freeboard.io/fetch/",
     "https://api.codetabs.com/v1/proxy?quest=",
   ];
 
   for (const proxy of corsProxies) {
-    const proxyUrl = `${proxy}${encodeURIComponent(url)}`;
+    const proxyUrl = `${proxy}${url}`;
 
     try {
       const response = await axios.get(proxyUrl);
@@ -189,9 +189,9 @@ function App() {
       }
 
       // Fetch article
-      let response;
+      let htmlResponse;
       try {
-        response = await fetchURLContents(url);
+        htmlResponse = await fetchURLContents(url);
       } catch (fetchError) {
         if (fetchError.code === "ECONNABORTED") {
           throw new Error(
@@ -208,7 +208,7 @@ function App() {
         }
       }
 
-      const doc = new DOMParser().parseFromString(response.data, "text/html");
+      const doc = new DOMParser().parseFromString(htmlResponse, "text/html");
       const article = new Readability(doc).parse();
 
       if (!article || !article.textContent.trim()) {
