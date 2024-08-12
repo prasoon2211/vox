@@ -407,22 +407,26 @@ function App() {
                   : "Save API Key"}
               </Button>
               {apiKey && (
-                <div className="mt-2">
+                <div className="mt-4 flex flex-col items-center">
+                  {" "}
+                  {/* Changed to flex container */}
                   <Button
                     type="button"
                     onClick={() => setShowOptions(!showOptions)}
                     variant="outline"
-                    className="w-full flex justify-between items-center"
+                    className="w-full max-w-md bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium border-gray-300 shadow-sm" // Added styling
                   >
                     <span>Options</span>
                     {showOptions ? (
-                      <ChevronUp className="w-4 h-4" />
+                      <ChevronUp className="w-4 h-4 ml-2" />
                     ) : (
-                      <ChevronDown className="w-4 h-4" />
+                      <ChevronDown className="w-4 h-4 ml-2" />
                     )}
                   </Button>
                   {showOptions && (
-                    <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                    <div className="mt-4 p-4 bg-gray-50 rounded-lg w-full max-w-md border border-gray-200 shadow-sm">
+                      {" "}
+                      {/* Added max-width and border */}
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Select Narration Voice
                       </label>
@@ -444,6 +448,7 @@ function App() {
                       </Select>
                       <div className="mt-2 ml-1 text-sm">
                         {" "}
+                        {/* Added margin-left */}
                         <a
                           href="https://platform.openai.com/docs/guides/text-to-speech/voice-options"
                           target="_blank"
