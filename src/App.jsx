@@ -218,12 +218,14 @@ function App() {
     title,
     audioBlob,
     pageUrl,
+    audioUrl,
     duration,
     articleText
   ) => {
     const newEntry = {
       title,
       audioBlob,
+      audioUrl,
       pageUrl,
       date: new Date().toISOString(),
       duration,
@@ -391,7 +393,15 @@ function App() {
           title: article.title || url,
           duration,
         });
-        addToHistory(article.title, concatenatedBlob, url, duration, fullText);
+        addToHistory(
+          article.title,
+          concatenatedBlob,
+          url,
+          audioUrl,
+          duration,
+          fullText
+        );
+        setIsPlaying(true); // Start playing automatically
       });
     } catch (error) {
       console.error("Error:", error);
@@ -529,9 +539,6 @@ function App() {
                   </Button>
                   {showOptions && (
                     <div className="mt-4 p-4 bg-gray-50 rounded-lg w-full border border-gray-200 shadow-sm">
-                      {" "}
-                      {/* Removed max-w-md */}{" "}
-                      {/* Added max-width and border */}
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Select Narration Voice
                       </label>
@@ -552,8 +559,6 @@ function App() {
                         </SelectContent>
                       </Select>
                       <div className="mt-2 ml-1 text-sm">
-                        {" "}
-                        {/* Added margin-left */}
                         <a
                           href="https://platform.openai.com/docs/guides/text-to-speech/voice-options"
                           target="_blank"
@@ -563,18 +568,42 @@ function App() {
                           Listen to samples here
                         </a>
                       </div>
-                      <div className="flex items-center space-x-2 mt-4">
+                      <hr className="my-4 border-gray-300" />
+                      <div className="flex items-center space-x-2">
                         <Switch
                           id="use-archive"
                           checked={useArchive}
                           onCheckedChange={setUseArchive}
                         />
-                        <label
-                          htmlFor="use-archive"
-                          className="text-sm font-medium text-gray-700"
-                        >
-                          Use archive.ph
-                        </label>
+                        <div className="flex items-center">
+                          <label
+                            htmlFor="use-archive"
+                            className="text-sm font-medium text-gray-700 mr-1"
+                          >
+                            Use archive.ph
+                          </label>
+                          <div className="relative group">
+                            <span className="text-gray-500 cursor-pointer">
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-4 w-4"
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-4a1 1 0 100 2 1 1 0 000-2zm1 4a1 1 0 00-2 0v4a1 1 0 002 0v-4z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            </span>
+                            <div className="absolute bottom-full mb-1 hidden group-hover:block w-48 p-2 bg-gray-800 text-white text-xs rounded shadow-lg">
+                              Turn this on if you're having trouble getting the
+                              URL to work. This will use archive.ph to fetch the
+                              article instead of the original URL.
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
