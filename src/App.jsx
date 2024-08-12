@@ -11,7 +11,8 @@ import { Clipboard } from "lucide-react";
 import { ExternalLink } from "lucide-react";
 import { Search } from "lucide-react";
 import { Play, Trash2, Download } from "lucide-react";
-import Fuse from "fuse.js"; // Add this import for fuzzy search
+import { FileText } from "lucide-react";
+import Fuse from "fuse.js";
 import {
   Dialog,
   DialogContent,
@@ -40,20 +41,80 @@ const fetchURLContents = async (url) => {
     "https://api.codetabs.com/v1/proxy?quest=",
   ];
 
+  // First, try without a proxy
+  try {
+    const response = await axios.get(url);
+    return response.data;
+  } catch (error) {
+    console.warn("Error fetching without proxy:", error);
+  }
+
+  // If direct request fails, try with proxies
   for (const proxy of corsProxies) {
-    const proxyUrl = `${proxy}${url}`;
+    const proxyUrl = `${proxy}${encodeURIComponent(url)}`;
 
     try {
-      const response = await axios.get(proxyUrl);
+      const response = await axios.get(proxyUrl, {
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+        },
+      });
       return response.data;
     } catch (error) {
       console.error(`Error fetching with proxy ${proxy}:`, error);
-      // Continue to the next proxy if there's an error
     }
   }
 
-  // If all proxies fail, throw an error
-  throw new Error("All proxies failed to fetch the URL");
+  // If all attempts fail, throw an error
+  throw new Error(
+    "Failed to fetch the URL content. Please try again later or with a different URL."
+  );
+};
+
+const TranscriptView = ({ title, content }) => {
+  return (
+    <div className="max-w-3xl mx-auto p-8">
+      <h1 className="text-3xl font-bold mb-6">{title}</h1>
+      <div className="prose prose-lg">
+        {content.split("\n").map((paragraph, index) => (
+          <p key={index} className="mb-4">
+            {paragraph}
+          </p>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const openTranscript = (item) => {
+  const transcriptWindow = window.open("", "_blank");
+  transcriptWindow.document.write(`
+    <html>
+      <head>
+        <title>${item.title} - Transcript</title>
+        <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+      </head>
+      <body>
+        <div id="root" class="max-w-3xl mx-auto p-8">
+          <h1 class="text-3xl font-bold mb-6">${item.title}</h1>
+          <div class="prose prose-lg" id="content"></div>
+        </div>
+        <script>
+          const content = document.getElementById('content');
+          const paragraphs = ${JSON.stringify(item.articleText.split("\n"))};
+          paragraphs.forEach(paragraph => {
+            if (paragraph.trim()) {
+              const p = document.createElement('p');
+              p.textContent = paragraph;
+              p.className = 'mb-4';
+              content.appendChild(p);
+            }
+          });
+        </script>
+      </body>
+    </html>
+  `);
+  transcriptWindow.document.close();
 };
 
 function App() {
@@ -130,14 +191,22 @@ function App() {
     }
   };
 
-  const addToHistory = async (title, audioBlob, pageUrl, duration) => {
+  const addToHistory = async (
+    title,
+    audioBlob,
+    pageUrl,
+    duration,
+    articleText
+  ) => {
     const newEntry = {
       title,
       audioBlob,
       pageUrl,
       date: new Date().toISOString(),
       duration,
+      articleText,
     };
+
     const updatedHistory = [newEntry, ...history];
     setHistory(updatedHistory);
     try {
@@ -287,7 +356,7 @@ function App() {
           title: article.title || url,
           duration,
         });
-        addToHistory(article.title, concatenatedBlob, url, duration);
+        addToHistory(article.title, concatenatedBlob, url, duration, fullText);
       });
     } catch (error) {
       console.error("Error:", error);
@@ -567,6 +636,13 @@ function App() {
                         aria-label="Play Audio"
                       >
                         <Play className="w-6 h-6" />
+                      </button>
+                      <button
+                        onClick={() => openTranscript(item)}
+                        className="text-gray-600 hover:text-purple-600 transition-colors duration-200"
+                        aria-label="View Transcript"
+                      >
+                        <FileText className="w-6 h-6" />
                       </button>
                       <button
                         onClick={() => downloadHistoryItem(item)}
