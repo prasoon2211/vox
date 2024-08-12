@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import ReactHowler from "react-howler";
 import { FaPlay, FaPause, FaUndo, FaRedo, FaClock } from "react-icons/fa";
 
@@ -12,7 +12,6 @@ const AudioPlayer = ({ src, title, playing, onTogglePlay }) => {
   const playerRef = useRef(null);
   const rafRef = useRef(null);
   const isLoadedRef = useRef(false);
-  const [setFormattedTime] = useState("0:00 / 0:00");
   const [isDragging, setIsDragging] = useState(false);
   const [tempSeek, setTempSeek] = useState(0);
 
@@ -82,14 +81,25 @@ const AudioPlayer = ({ src, title, playing, onTogglePlay }) => {
     setSeek(0);
   };
 
-  const updateSeek = () => {
-    if (playerRef.current && isLoadedRef.current) {
+  const updateSeek = useCallback(() => {
+    if (playerRef.current && isLoadedRef.current && !isDragging) {
       const currentSeek = playerRef.current.seek();
       setSeek(currentSeek);
-      setFormattedTime(`${formatTime(currentSeek)} / ${formatTime(duration)}`);
-      rafRef.current = requestAnimationFrame(updateSeek);
     }
-  };
+    rafRef.current = requestAnimationFrame(updateSeek);
+  }, [isDragging]);
+
+  useEffect(() => {
+    if (playing && isLoaded) {
+      rafRef.current = requestAnimationFrame(updateSeek);
+    } else {
+      cancelAnimationFrame(rafRef.current);
+    }
+
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+    };
+  }, [playing, isLoaded, updateSeek]);
 
   const handleSeek = (direction) => {
     if (playerRef.current && isLoaded) {

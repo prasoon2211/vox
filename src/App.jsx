@@ -407,14 +407,14 @@ function App() {
                   : "Save API Key"}
               </Button>
               {apiKey && (
-                <div className="mt-4 flex flex-col items-center">
+                <div className="mt-4 flex flex-col items-center w-full">
                   {" "}
-                  {/* Changed to flex container */}
+                  {/* Added w-full */}
                   <Button
                     type="button"
                     onClick={() => setShowOptions(!showOptions)}
                     variant="outline"
-                    className="w-full max-w-md bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium border-gray-300 shadow-sm" // Added styling
+                    className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium border-gray-300 shadow-sm"
                   >
                     <span>Options</span>
                     {showOptions ? (
@@ -424,8 +424,9 @@ function App() {
                     )}
                   </Button>
                   {showOptions && (
-                    <div className="mt-4 p-4 bg-gray-50 rounded-lg w-full max-w-md border border-gray-200 shadow-sm">
+                    <div className="mt-4 p-4 bg-gray-50 rounded-lg w-full border border-gray-200 shadow-sm">
                       {" "}
+                      {/* Removed max-w-md */}{" "}
                       {/* Added max-width and border */}
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Select Narration Voice
