@@ -30,8 +30,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"; // Add this import
+import { Switch } from "@/components/ui/switch"; // Add this import
 
 import AudioPlayer from "./AudioPlayer";
+
+const fetchArchiveUrl = async (url) => {
+  try {
+    const archiveUrl = `https://archive.ph/${encodeURIComponent(url)}`;
+    const response = await axios.get(archiveUrl);
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(response.data, "text/html");
+    const linkElement = doc.querySelector(
+      '.TEXT-BLOCK a[href^="https://archive.ph/"]'
+    );
+
+    if (linkElement) {
+      return linkElement.getAttribute("href");
+    } else {
+      throw new Error("Archive URL not found");
+    }
+  } catch (error) {
+    console.error("Error fetching archive URL:", error);
+    throw error;
+  }
+};
 
 const fetchURLContents = async (url) => {
   const corsProxies = [
@@ -71,20 +93,20 @@ const fetchURLContents = async (url) => {
   );
 };
 
-const TranscriptView = ({ title, content }) => {
-  return (
-    <div className="max-w-3xl mx-auto p-8">
-      <h1 className="text-3xl font-bold mb-6">{title}</h1>
-      <div className="prose prose-lg">
-        {content.split("\n").map((paragraph, index) => (
-          <p key={index} className="mb-4">
-            {paragraph}
-          </p>
-        ))}
-      </div>
-    </div>
-  );
-};
+// const TranscriptView = ({ title, content }) => {
+//   return (
+//     <div className="max-w-3xl mx-auto p-8">
+//       <h1 className="text-3xl font-bold mb-6">{title}</h1>
+//       <div className="prose prose-lg">
+//         {content.split("\n").map((paragraph, index) => (
+//           <p key={index} className="mb-4">
+//             {paragraph}
+//           </p>
+//         ))}
+//       </div>
+//     </div>
+//   );
+// };
 
 const openTranscript = (item) => {
   const transcriptWindow = window.open("", "_blank");
@@ -132,6 +154,7 @@ function App() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
   const [voiceOption, setVoiceOption] = useState("alloy");
+  const [useArchive, setUseArchive] = useState(false);
 
   useEffect(() => {
     try {
@@ -277,10 +300,22 @@ function App() {
         throw new Error("Please enter a valid URL.");
       }
 
+      let finalUrl = url;
+      if (useArchive) {
+        try {
+          finalUrl = await fetchArchiveUrl(url);
+        } catch (archiveError) {
+          console.warn(
+            "Failed to fetch archive URL, falling back to original URL:",
+            archiveError
+          );
+        }
+      }
+
       // Fetch article
       let htmlResponse;
       try {
-        htmlResponse = await fetchURLContents(url);
+        htmlResponse = await fetchURLContents(finalUrl);
       } catch (fetchError) {
         if (fetchError.code === "ECONNABORTED") {
           throw new Error(
@@ -527,6 +562,19 @@ function App() {
                         >
                           Listen to samples here
                         </a>
+                      </div>
+                      <div className="flex items-center space-x-2 mt-4">
+                        <Switch
+                          id="use-archive"
+                          checked={useArchive}
+                          onCheckedChange={setUseArchive}
+                        />
+                        <label
+                          htmlFor="use-archive"
+                          className="text-sm font-medium text-gray-700"
+                        >
+                          Use archive.ph
+                        </label>
                       </div>
                     </div>
                   )}
